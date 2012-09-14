@@ -1,0 +1,181 @@
+
+@font-face {
+  font-family: "nounfont";
+  src: url('nounfont.svg') format('svg');
+  font-weight: normal;
+  font-style: normal;
+}
+
+
+[class^="icon-"]:before, [class*=" icon-"]:before {
+  font-family: nounfont;
+  font-weight: normal;
+  font-style: normal;
+  display: inline-block;
+  text-decoration: inherit;
+}
+.icon-advanced-mecanics::before {
+    content: "\f000";
+}
+.icon-aircaft::before {
+    content: "\f001";
+}
+.icon-applied-science::before {
+    content: "\f002";
+}
+.icon-basic-mecanics::before {
+    content: "\f003";
+}
+.icon-bio-fuels::before {
+    content: "\f004";
+}
+.icon-bio-mecanics::before {
+    content: "\f005";
+}
+.icon-bio-tree::before {
+    content: "\f006";
+}
+.icon-brain-agumentation::before {
+    content: "\f007";
+}
+.icon-child-care::before {
+    content: "\f008";
+}
+.icon-city-planning::before {
+    content: "\f009";
+}
+.icon-code-of-laws::before {
+    content: "\f00a";
+}
+.icon-communication-tower::before {
+    content: "\f00b";
+}
+.icon-comunity::before {
+    content: "\f00c";
+}
+.icon-diomand-science::before {
+    content: "\f00d";
+}
+.icon-ecology::before {
+    content: "\f00e";
+}
+.icon-economics::before {
+    content: "\f00f";
+}
+.icon-economics2::before {
+    content: "\f010";
+}
+.icon-electro-fuels::before {
+    content: "\f011";
+}
+.icon-energy::before {
+    content: "\f012";
+}
+.icon-energy2::before {
+    content: "\f013";
+}
+.icon-engenearing::before {
+    content: "\f014";
+}
+.icon-factory::before {
+    content: "\f015";
+}
+.icon-fingerprint::before {
+    content: "\f016";
+}
+.icon-fossle-fuel::before {
+    content: "\f017";
+}
+.icon-genetics::before {
+    content: "\f018";
+}
+.icon-global-map::before {
+    content: "\f019";
+}
+.icon-gps::before {
+    content: "\f01a";
+}
+.icon-happines::before {
+    content: "\f01b";
+}
+.icon-holo-theater::before {
+    content: "\f01c";
+}
+.icon-human-brain::before {
+    content: "\f01d";
+}
+.icon-idea::before {
+    content: "\f01e";
+}
+.icon-mine::before {
+    content: "\f01f";
+}
+.icon-monetary-ethics::before {
+    content: "\f020";
+}
+.icon-monetary::before {
+    content: "\f021";
+}
+.icon-monument::before {
+    content: "\f022";
+}
+.icon-naval-tech::before {
+    content: "\f023";
+}
+.icon-nuclear::before {
+    content: "\f024";
+}
+.icon-old-library::before {
+    content: "\f025";
+}
+.icon-peace::before {
+    content: "\f026";
+}
+.icon-plant-tree::before {
+    content: "\f027";
+}
+.icon-police::before {
+    content: "\f028";
+}
+.icon-protest::before {
+    content: "\f029";
+}
+.icon-radiation::before {
+    content: "\f02a";
+}
+.icon-rail-building::before {
+    content: "\f02b";
+}
+.icon-resycle::before {
+    content: "\f02c";
+}
+.icon-riots::before {
+    content: "\f02d";
+}
+.icon-rockets::before {
+    content: "\f02e";
+}
+.icon-scientific-method::before {
+    content: "\f02f";
+}
+.icon-social-services::before {
+    content: "\f030";
+}
+.icon-soft-tree::before {
+    content: "\f031";
+}
+.icon-solar-energy::before {
+    content: "\f032";
+}
+.icon-spy::before {
+    content: "\f033";
+}
+.icon-survalance::before {
+    content: "\f034";
+}
+.icon-trade::before {
+    content: "\f035";
+}
+.icon-wind-energy::before {
+    content: "\f036";
+}
