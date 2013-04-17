@@ -59,7 +59,11 @@ DOC_FOOTER = """
 CSS_HEADER = """
 @font-face {{
   font-family: "{0}";
-  src: url('{0}.svg') format('svg');
+  src: url('{0}.eot');
+  src: url('{0}.eot') format('embedded-opentype'),
+       url('{0}.ttf') format('truetype'),
+       url('{0}.woff') format('woff'),
+       url('{0}.svg') format('svg');
   font-weight: normal;
   font-style: normal;
 }}
@@ -239,13 +243,16 @@ def compute_minrec():
 
 def do_glyph(f, glyphname, index, name, svg, doc, css):
 
+    if not f.endswith(".svg"):
+        return
+
 
     doc.write("<i class='"+glyphname+"'></i> "+glyphname+"<br/>\n")
     css.write('.{0}::before {{\n    content: "\{1}";\n}}\n'.format(glyphname, hex(index)[2:].lower()))
 
     data = open(name+"/"+f).read()
 
-    print f
+    print "doing glyph", f
 
     viewBox, paths = svg_paths(data)
     # font needs to be of one path
@@ -320,7 +327,7 @@ def do_glyph(f, glyphname, index, name, svg, doc, css):
     svg.write(GLYPH % (htmlhex(index), path))
 
 def main():
-    name = sys.argv[1]
+    name = sys.argv[-1]
 
     svg = open(name+".svg",'w')
     doc = open(name+".html",'w')
@@ -333,7 +340,9 @@ def main():
     # use the special user area
     index = 0xf000
 
+    print os.listdir(name)
     for f in sorted(os.listdir(name)):
+        print f
         glyphname = "icon-"+f.replace(".svg","").replace("_","-").replace(" ","-").lower()
         do_glyph(f, glyphname, index, name, svg, doc, css)
         index += 1
@@ -345,7 +354,19 @@ def main():
     svg.flush()
     svg.close()
 
-    os.system("fontforge -lang=ff -c 'Open($1); Generate($2); Generate($3);' {0}.svg {0}.ttf {0}.woff".format(name))
+    #print "font forge {"
+    #cmd = "fontforge -c 'Open($1); Generate($2); Generate($3);' {0}.svg {0}.ttf {0}.woff".format(name)
+    #cmd = "fontforge -c \"f = fontforge.open('{0}.svg'); f.generate('{0}.ttf'); f.generate('{0}.woff')\";".format(name)
+    #
+    #print cmd
+    #os.system(cmd)
+    #print "}"
+
+    import fontforge
+    font = fontforge.open(name+".svg")
+    font.generate(name+".ttf")
+    font.generate(name+".woff")
+
     os.system("ttf2eot {0}.ttf > {0}.eot".format(name))
 
 
