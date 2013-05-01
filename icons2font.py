@@ -9,14 +9,14 @@ HEADER = """<?xml version="1.0" standalone="no"?>
 <svg xmlns="http://www.w3.org/2000/svg">
 <metadata></metadata>
 <defs>
-<font id="%s">
+<font id="{}">
 <font-face units-per-em="2048" ascent="1536" descent="-512" />
 <missing-glyph horiz-adv-x="512" />
 <glyph horiz-adv-x="0" />
 <glyph horiz-adv-x="0" />
 """
 
-GLYPH = """<glyph unicode="%s" horiz-adv-x="1400" d="%s" />\n\n"""
+GLYPH = """<glyph unicode="{0}" horiz-adv-x="1400" d="{1}" />\n\n"""
 
 FOOTER = """
 
@@ -36,40 +36,50 @@ DOC_HEADER = """
     <link rel="stylesheet" href="{0}.css">
     <style type="text/css">
         body {{
-           font-size: 2em;
+           font-size: 3em;
            color: black;
         }}
-    </style
+        textarea {{
+           font-size: 3em;
+           width: 100%;
+           height: 300px;
+        }}
+    </style>
 </head>
 <body>
 <h1>Font: {0}</h1>
-
 """
 DOC_FOOTER = """
+<hr>
+<textarea></textarea>
 </body>
 </html>
 """
 
 #  src: url('{0}.eot');
-#  src: url('{0}.eot') format('embedded-opentype'),
+#  src: url('{0}.eot#iefix') format('embedded-opentype'),
 #       url('{0}.ttf') format('truetype'),
 #       url('{0}.woff') format('woff'),
-#       url('{0}.svg') format('svg');
+#       url('{0}.svg') format('svg'),
+#       url('{0}.otf') format("opentype");
+
 
 CSS_HEADER = """
 @font-face {{
   font-family: "{0}";
   src: url('{0}.eot');
-  src: url('{0}.eot') format('embedded-opentype'),
+  src: url('{0}.eot#iefix') format('embedded-opentype'),
        url('{0}.ttf') format('truetype'),
        url('{0}.woff') format('woff'),
-       url('{0}.svg') format('svg');
+       url('{0}.svg') format('svg'),
+       url('{0}.otf') format("opentype");
   font-weight: normal;
   font-style: normal;
+  font-feature-settings: "calt=0,liga=0"
 }}
 
 
-[class^="icon-"]:before, [class*=" icon-"]:before {{
+[class^="icon-"], [class*=" icon-"] {{
   font-family: {0};
   font-weight: normal;
   font-style: normal;
@@ -241,14 +251,16 @@ def compute_minrec():
     sizey = maxy - miny
 
 
-def do_glyph(f, glyphname, index, name, svg, doc, css):
+def do_glyph(f, glyphname, index, name, artname, svg, doc, css):
 
     if not f.endswith(".svg"):
         return
 
 
-    doc.write("<i class='"+glyphname+"'></i> "+glyphname+"<br/>\n")
-    css.write('.{0}::before {{\n    content: "\{1}";\n}}\n'.format(glyphname, hex(index)[2:].lower()))
+    doc.write("<i class='{0}'></i> {0} ({1}) <br/>\n".format(
+        glyphname, artname))
+    #doc.write("[ " + glyphname + " ]")
+    css.write('.{0}:before {{\n    content: "\{1}";\n}}\n'.format(glyphname, hex(index)[2:].lower()))
 
     data = open(name+"/"+f).read()
 
@@ -324,7 +336,11 @@ def do_glyph(f, glyphname, index, name, svg, doc, css):
 
     path = compile_path(commands)
     #print "final path", path
-    svg.write(GLYPH % (htmlhex(index), path))
+    svg.write(GLYPH.format(htmlhex(index), path))
+
+
+    #svg.write(GLYPH.format(glyphname, path))
+
 
 def main():
     name = sys.argv[-1]
@@ -340,11 +356,15 @@ def main():
     # use the special user area
     index = 0xf000
 
+    current = ord("a")
+
     print os.listdir(name)
     for f in sorted(os.listdir(name)):
         print f
-        glyphname = "icon-"+f.replace(".svg","").replace("_","-").replace(" ","-").lower()
-        do_glyph(f, glyphname, index, name, svg, doc, css)
+        glyphname = "icon-" + f.replace(".svg","").replace("_","-").replace(" ","-").lower()
+        artname = chr(current)
+        current += 1
+        do_glyph(f, glyphname, index, name, artname, svg, doc, css)
         index += 1
 
     doc.write(DOC_FOOTER)
@@ -364,8 +384,11 @@ def main():
 
     import fontforge
     font = fontforge.open(name+".svg")
+    for g in font.glyphs(): print g
     font.generate(name+".ttf")
     font.generate(name+".woff")
+    font.generate(name+".otf")
+
 
     os.system("ttf2eot {0}.ttf > {0}.eot".format(name))
 
