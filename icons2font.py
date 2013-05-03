@@ -35,23 +35,34 @@ DOC_HEADER = """
     <meta charset="utf-8" />
     <link rel="stylesheet" href="{0}.css">
     <style type="text/css">
-        body {{
-           font-size: 3em;
-           color: black;
-        }}
-        textarea {{
-           font-size: 3em;
-           width: 100%;
-           height: 300px;
-        }}
+body {{
+ font-size: 3em;
+ color: black;
+}}
+
+/* designer font */
+@font-face {{
+  font-family: "{0}-designer";
+  src: url('{0}-designer.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-feature-settings: "calt=0,liga=0"
+}}
+textarea {{
+ font-family: {0}-designer;
+ font-size: 3em;
+ width: 100%;
+ height: 300px;
+}}
     </style>
 </head>
 <body>
-<h1>Font: {1}</h1>
+<h1>Font: {0}</h1>
 """
 DOC_FOOTER = """
 <hr>
-<textarea></textarea>
+try out and <a href='{0}-designer.ttf'>download</a> desinger font
+<textarea>a b c d</textarea>
 </body>
 </html>
 """
@@ -64,8 +75,7 @@ DOC_FOOTER = """
 #       url('{0}.otf') format("opentype");
 
 
-CSS_HEADER = """
-@font-face {{
+CSS_HEADER = """@font-face {{
   font-family: "{0}";
   src: url('{0}.eot');
   src: url('{0}.eot#iefix') format('embedded-opentype'),
@@ -77,8 +87,6 @@ CSS_HEADER = """
   font-style: normal;
   font-feature-settings: "calt=0,liga=0"
 }}
-
-
 [class^="{0}-"], [class*=" {0}-"] {{
   font-family: {0};
   font-weight: normal;
@@ -88,6 +96,7 @@ CSS_HEADER = """
 }}
 """
 
+USER_AREA = 0xf000
 
 COMMANDS_ABS = "MZLHVCSQTA"
 COMMANDS_REL = COMMANDS_ABS.lower()
@@ -251,20 +260,9 @@ def compute_minrec():
     sizey = maxy - miny
 
 
-def do_glyph(f, glyphname, index, input_dir, artname, svg, doc, css):
+def do_glyph(data, glyphname, svg):
+    """ converts a file into a svg glyph """
 
-    if not f.endswith(".svg"):
-        return
-
-
-    doc.write("<i class='{0}'></i> {0} ({1}) <br/>\n".format(
-        glyphname, artname))
-    #doc.write("[ " + glyphname + " ]")
-    css.write('.{0}:before {{\n    content: "\{1}";\n}}\n'.format(glyphname, hex(index)[2:].lower()))
-
-    data = open(input_dir+"/"+f).read()
-
-    print "doing glyph", f
 
     viewBox, paths = svg_paths(data)
     # font needs to be of one path
@@ -336,10 +334,57 @@ def do_glyph(f, glyphname, index, input_dir, artname, svg, doc, css):
 
     path = compile_path(commands)
     #print "final path", path
-    svg.write(GLYPH.format(htmlhex(index), path))
+    svg.write(GLYPH.format(glyphname, path))
 
 
     #svg.write(GLYPH.format(glyphname, path))
+
+def gen_svg_font(glyph_files, output_dir, font_name, glyph_name):
+
+    svg = open(output_dir + font_name + ".svg",'w')
+    svg.write(HEADER.format(font_name))
+
+    # use the special unicode user area for char encoding
+    index = 0
+    #current = ord("a")
+    for f in glyph_files:
+        #glyphname = font_name + "-" + f.replace(".svg","").replace("_","-").replace(" ","-").lower()
+        glyphname = htmlhex(index)
+
+        data = open(f).read()
+        #artname = chr(current)
+        do_glyph(data, glyph_name(index), svg)
+
+        index += 1
+
+    svg.write(FOOTER)
+    svg.flush()
+    svg.close()
+
+
+def gen_css_for_font(glyph_files, output_dir, font_name):
+    css = open(output_dir + font_name + ".css",'w')
+    css.write(CSS_HEADER.format(font_name))
+
+    for index, f in enumerate(glyph_files):
+        glyph_name = font_name + "-" + f.split("/")[-1].replace(".svg", "")
+        css.write(
+            '.{0}:before {{\n    content: "\{1:04x}";\n}}\n'.format(
+                glyph_name,
+                USER_AREA + index))
+
+
+def gen_html_for_font(glyph_files, output_dir, font_name):
+    doc = open(output_dir + font_name + ".html",'w')
+    doc.write(DOC_HEADER.format(font_name))
+
+    for index, f in enumerate(glyph_files):
+        glyph_name = font_name + "-" + f.split("/")[-1].replace(".svg", "")
+        art_name = chr(ord('a') + index)
+        doc.write("<i class='{0}'></i> {0} ({1}) <br/>\n".format(
+            glyph_name, art_name))
+
+    doc.write(DOC_FOOTER.format(font_name))
 
 
 def main():
@@ -352,53 +397,60 @@ def main():
     if not output_dir.endswith("/"):
         output_dir = output_dir + "/"
 
-    svg = open(output_dir + font_name + ".svg",'w')
-    doc = open(output_dir + font_name + ".html",'w')
-    css = open(output_dir + font_name + ".css",'w')
+    # make sure output dir exists
+    try:
+       os.makedirs(output_dir)
+    except:
+       pass
 
-    svg.write(HEADER.format(input_dir))
-    doc.write(DOC_HEADER.format(output_dir + font_name, font_name))
-    css.write(CSS_HEADER.format(font_name))
-
-    # use the special user area
-    index = 0xf000
-
-    current = ord("a")
-
-    print os.listdir(input_dir)
+    glyph_files = []
     for f in sorted(os.listdir(input_dir)):
-        glyphname = font_name + "-" + f.replace(".svg","").replace("_","-").replace(" ","-").lower()
-        artname = chr(current)
-        current += 1
-        do_glyph(f, glyphname, index, input_dir, artname, svg, doc, css)
-        index += 1
+        if not f.endswith(".svg"):
+            continue
+        glyph_files.append(input_dir+"/"+f)
 
-    doc.write(DOC_FOOTER)
-    doc.close()
-    css.close()
-    svg.write(FOOTER)
-    svg.flush()
-    svg.close()
+    # generate browser svg font
+    gen_svg_font(
+        glyph_files,
+        output_dir,
+        font_name,
+        glyph_name=lambda i:htmlhex(i + USER_AREA)
+    )
 
-    #print "font forge {"
-    #cmd = "fontforge -c 'Open($1); Generate($2); Generate($3);' {0}.svg {0}.ttf {0}.woff".format(name)
-    #cmd = "fontforge -c \"f = fontforge.open('{0}.svg'); f.generate('{0}.ttf'); f.generate('{0}.woff')\";".format(name)
-    #
-    #print cmd
-    #os.system(cmd)
-    #print "}"
+    # generate designer svg font
+    gen_svg_font(
+        glyph_files,
+        output_dir,
+        font_name+"-designer",
+        glyph_name=lambda i:chr(i+ord("a"))
+    )
 
+    # generate css
+    gen_css_for_font(
+        glyph_files,
+        output_dir,
+        font_name,
+    )
+
+    # generate sample html
+    gen_html_for_font(
+        glyph_files,
+        output_dir,
+        font_name,
+    )
+
+    # make ttf, woff, off, and eot browser fonts
     import fontforge
     font = fontforge.open(output_dir + font_name + ".svg")
-    for g in font.glyphs(): print g
     font.generate(output_dir + font_name + ".ttf")
     font.generate(output_dir + font_name + ".woff")
     font.generate(output_dir + font_name + ".otf")
-
-
     os.system("ttf2eot {0}.ttf > {0}.eot".format(output_dir + font_name))
+
+    # make designer ttf
+    font = fontforge.open(output_dir + font_name + "-designer.svg")
+    font.generate(output_dir + font_name + "-designer.ttf")
 
 
 if __name__ == "__main__":
     main()
-
