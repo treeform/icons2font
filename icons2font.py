@@ -47,7 +47,7 @@ DOC_HEADER = """
     </style>
 </head>
 <body>
-<h1>Font: {0}</h1>
+<h1>Font: {1}</h1>
 """
 DOC_FOOTER = """
 <hr>
@@ -79,7 +79,7 @@ CSS_HEADER = """
 }}
 
 
-[class^="icon-"], [class*=" icon-"] {{
+[class^="{0}-"], [class*=" {0}-"] {{
   font-family: {0};
   font-weight: normal;
   font-style: normal;
@@ -251,7 +251,7 @@ def compute_minrec():
     sizey = maxy - miny
 
 
-def do_glyph(f, glyphname, index, name, artname, svg, doc, css):
+def do_glyph(f, glyphname, index, input_dir, artname, svg, doc, css):
 
     if not f.endswith(".svg"):
         return
@@ -262,7 +262,7 @@ def do_glyph(f, glyphname, index, name, artname, svg, doc, css):
     #doc.write("[ " + glyphname + " ]")
     css.write('.{0}:before {{\n    content: "\{1}";\n}}\n'.format(glyphname, hex(index)[2:].lower()))
 
-    data = open(name+"/"+f).read()
+    data = open(input_dir+"/"+f).read()
 
     print "doing glyph", f
 
@@ -343,28 +343,34 @@ def do_glyph(f, glyphname, index, name, artname, svg, doc, css):
 
 
 def main():
-    name = sys.argv[-1]
+    input_dir = sys.argv[1]
+    output_dir = sys.argv[2]
+    font_name = "icon"
+    if len(sys.argv) > 3:
+        font_name = sys.argv[3]
 
-    svg = open(name+".svg",'w')
-    doc = open(name+".html",'w')
-    css = open(name+".css",'w')
+    if not output_dir.endswith("/"):
+        output_dir = output_dir + "/"
 
-    svg.write(HEADER.format(name))
-    doc.write(DOC_HEADER.format(name))
-    css.write(CSS_HEADER.format(name))
+    svg = open(output_dir + font_name + ".svg",'w')
+    doc = open(output_dir + font_name + ".html",'w')
+    css = open(output_dir + font_name + ".css",'w')
+
+    svg.write(HEADER.format(input_dir))
+    doc.write(DOC_HEADER.format(output_dir + font_name, font_name))
+    css.write(CSS_HEADER.format(font_name))
 
     # use the special user area
     index = 0xf000
 
     current = ord("a")
 
-    print os.listdir(name)
-    for f in sorted(os.listdir(name)):
-        print f
-        glyphname = "icon-" + f.replace(".svg","").replace("_","-").replace(" ","-").lower()
+    print os.listdir(input_dir)
+    for f in sorted(os.listdir(input_dir)):
+        glyphname = font_name + "-" + f.replace(".svg","").replace("_","-").replace(" ","-").lower()
         artname = chr(current)
         current += 1
-        do_glyph(f, glyphname, index, name, artname, svg, doc, css)
+        do_glyph(f, glyphname, index, input_dir, artname, svg, doc, css)
         index += 1
 
     doc.write(DOC_FOOTER)
@@ -383,14 +389,14 @@ def main():
     #print "}"
 
     import fontforge
-    font = fontforge.open(name+".svg")
+    font = fontforge.open(output_dir + font_name + ".svg")
     for g in font.glyphs(): print g
-    font.generate(name+".ttf")
-    font.generate(name+".woff")
-    font.generate(name+".otf")
+    font.generate(output_dir + font_name + ".ttf")
+    font.generate(output_dir + font_name + ".woff")
+    font.generate(output_dir + font_name + ".otf")
 
 
-    os.system("ttf2eot {0}.ttf > {0}.eot".format(name))
+    os.system("ttf2eot {0}.ttf > {0}.eot".format(output_dir + font_name))
 
 
 if __name__ == "__main__":
