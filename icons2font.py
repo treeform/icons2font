@@ -1,6 +1,7 @@
 import sys
 import os
 from xml.dom import minidom
+import md5
 
 GSIZE = 1400
 
@@ -77,12 +78,12 @@ try out and <a href='{0}-designer.ttf'>download</a> desinger font
 
 CSS_HEADER = """@font-face {{
   font-family: "{0}";
-  src: url('{0}.eot');
-  src: url('{0}.eot#iefix') format('embedded-opentype'),
-       url('{0}.ttf') format('truetype'),
-       url('{0}.woff') format('woff'),
-       url('{0}.svg') format('svg'),
-       url('{0}.otf') format("opentype");
+  src: url('{0}.eot?h={1}');
+  src: url('{0}.eot?h={1}#iefix') format('embedded-opentype'),
+       url('{0}.ttf?h={1}') format('truetype'),
+       url('{0}.woff?h={1}') format('woff'),
+       url('{0}.svg?h={1}') format('svg'),
+       url('{0}.otf?h={1}') format("opentype");
   font-weight: normal;
   font-style: normal;
   font-feature-settings: "calt=0,liga=0"
@@ -362,9 +363,9 @@ def gen_svg_font(glyph_files, output_dir, font_name, glyph_name):
     svg.close()
 
 
-def gen_css_for_font(glyph_files, output_dir, font_name):
+def gen_css_for_font(glyph_files, output_dir, font_name, hash):
     css = open(output_dir + font_name + ".css",'w')
-    css.write(CSS_HEADER.format(font_name))
+    css.write(CSS_HEADER.format(font_name, hash))
 
     for index, f in enumerate(glyph_files):
         glyph_name = font_name + "-" + f.split("/")[-1].replace(".svg", "")
@@ -425,18 +426,22 @@ def main():
         glyph_name=lambda i:chr(i+ord("a"))
     )
 
+    # get file hash
+    hash = md5.new(open(output_dir+font_name+".svg").read()).hexdigest()[:5]
+
     # generate css
     gen_css_for_font(
         glyph_files,
         output_dir,
         font_name,
+        hash
     )
 
     # generate sample html
     gen_html_for_font(
         glyph_files,
         output_dir,
-        font_name,
+        font_name
     )
 
     # make ttf, woff, off, and eot browser fonts
