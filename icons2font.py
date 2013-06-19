@@ -3,6 +3,7 @@ import os
 from xml.dom import minidom
 import md5
 
+DESIGNER_FONT_START_CHAR = "A"
 GSIZE = 1400
 
 HEADER = """<?xml version="1.0" standalone="no"?>
@@ -94,6 +95,8 @@ CSS_HEADER = """@font-face {{
   font-style: normal;
   display: inline-block;
   text-decoration: inherit;
+  vertical-align: baseline;
+  -webkit-font-smoothing: antialiased;
 }}
 """
 
@@ -381,7 +384,7 @@ def gen_html_for_font(glyph_files, output_dir, font_name):
 
     for index, f in enumerate(glyph_files):
         glyph_name = font_name + "-" + f.split("/")[-1].replace(".svg", "")
-        art_name = chr(ord('a') + index)
+        art_name = chr(ord(DESIGNER_FONT_START_CHAR) + index)
         doc.write("<i class='{0}'></i> {0} ({1}) <br/>\n".format(
             glyph_name, art_name))
 
@@ -423,7 +426,7 @@ def main():
         glyph_files,
         output_dir,
         font_name+"-designer",
-        glyph_name=lambda i:chr(i+ord("a"))
+        glyph_name=lambda i:chr(i+ord(DESIGNER_FONT_START_CHAR))
     )
 
     # get file hash
