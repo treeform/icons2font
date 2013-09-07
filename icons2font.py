@@ -1,5 +1,12 @@
+"""
+This utility takes vector icons in svg format and converts 
+them to icon fonts (svg,ttf,waff,eot) to be display in all browsers.
+
+requires python-fontforge
+"""
 import sys
 import os
+import argparse
 from xml.dom import minidom
 import md5
 
@@ -64,7 +71,7 @@ textarea {{
 DOC_FOOTER = """
 <hr>
 try out and <a href='{0}-designer.ttf'>download</a> desinger font
-<textarea>a b c d</textarea>
+<textarea>{1}</textarea>
 </body>
 </html>
 """
@@ -264,7 +271,7 @@ def compute_minrec():
     sizey = maxy - miny
 
 
-def do_glyph(data, glyphname, svg):
+def do_glyph(data, glyphname, svg, baseline):
     """ converts a file into a svg glyph """
 
 
@@ -275,7 +282,7 @@ def do_glyph(data, glyphname, svg):
 
     tranx, trany, sizex, sizey = viewBox
     tranx = -tranx
-    trany = -trany
+    trany = -trany + baseline
 
     size = max(sizex, sizey)
     scale = GSIZE/size
@@ -343,7 +350,7 @@ def do_glyph(data, glyphname, svg):
 
     #svg.write(GLYPH.format(glyphname, path))
 
-def gen_svg_font(glyph_files, output_dir, font_name, glyph_name):
+def gen_svg_font(glyph_files, output_dir, font_name, glyph_name, baseline):
 
     svg = open(output_dir + font_name + ".svg",'w')
     svg.write(HEADER.format(font_name))
@@ -357,7 +364,7 @@ def gen_svg_font(glyph_files, output_dir, font_name, glyph_name):
 
         data = open(f).read()
         #artname = chr(current)
-        do_glyph(data, glyph_name(index), svg)
+        do_glyph(data, glyph_name(index), svg, baseline)
 
         index += 1
 
@@ -382,25 +389,36 @@ def gen_html_for_font(glyph_files, output_dir, font_name):
     doc = open(output_dir + font_name + ".html",'w')
     doc.write(DOC_HEADER.format(font_name))
 
+    art_names = []
     for index, f in enumerate(glyph_files):
         glyph_name = font_name + "-" + f.split("/")[-1].replace(".svg", "")
         art_name = chr(ord(DESIGNER_FONT_START_CHAR) + index)
+        art_names.append(art_name)
         doc.write("<i class='{0}'></i> {0} ({1}) <br/>\n".format(
             glyph_name, art_name))
 
-    doc.write(DOC_FOOTER.format(font_name))
+
+    doc.write(DOC_FOOTER.format(font_name, " ".join(art_names)))
 
 
 def main():
-    input_dir = sys.argv[1]
-    output_dir = sys.argv[2]
-    font_name = "icon"
-    if len(sys.argv) > 3:
-        font_name = sys.argv[3]
+    parser = argparse.ArgumentParser(description=__doc__)
 
-    if not output_dir.endswith("/"):
-        output_dir = output_dir + "/"
+    parser.add_argument('name', type=str, help="name of the icon font you want")
+    parser.add_argument('src', type=str, help="folder wher the svg glyphs are")
+    parser.add_argument('dest', type=str, help="folder to output the stuff", nargs="?")
+    parser.add_argument('--baseline', type=int, help="adjust generated chars up or down", default=0)
 
+    args = parser.parse_args()
+    
+
+    font_name = args.name
+    input_dir = args.src
+    output_dir = args.dest
+    if not output_dir:
+        output_dir = font_name + "/"  
+
+    
     # make sure output dir exists
     try:
        os.makedirs(output_dir)
@@ -418,7 +436,8 @@ def main():
         glyph_files,
         output_dir,
         font_name,
-        glyph_name=lambda i:htmlhex(i + USER_AREA)
+        glyph_name=lambda i:htmlhex(i + USER_AREA),
+        baseline=args.baseline
     )
 
     # generate designer svg font
@@ -426,7 +445,8 @@ def main():
         glyph_files,
         output_dir,
         font_name+"-designer",
-        glyph_name=lambda i:chr(i+ord(DESIGNER_FONT_START_CHAR))
+        glyph_name=lambda i:chr(i+ord(DESIGNER_FONT_START_CHAR)),
+        baseline=args.baseline
     )
 
     # get file hash
