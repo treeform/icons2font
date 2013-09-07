@@ -13,15 +13,15 @@ import md5
 DESIGNER_FONT_START_CHAR = "A"
 GSIZE = 1400
 
+
 HEADER = """<?xml version="1.0" standalone="no"?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd" >
 <svg xmlns="http://www.w3.org/2000/svg">
 <metadata></metadata>
 <defs>
-<font id="{}">
-<font-face units-per-em="2048" ascent="1536" descent="-512" />
-<missing-glyph horiz-adv-x="512" />
-<glyph horiz-adv-x="0" />
+<font id="{0}">
+<font-face units-per-em="{1}" ascent="{2}" descent="-{3}" />
+<missing-glyph horiz-adv-x="{3}" />
 <glyph horiz-adv-x="0" />
 """
 
@@ -282,7 +282,9 @@ def do_glyph(data, glyphname, svg, baseline):
 
     tranx, trany, sizex, sizey = viewBox
     tranx = -tranx
-    trany = -trany + baseline
+    trany = -trany
+
+    trany -= baseline
 
     size = max(sizex, sizey)
     scale = GSIZE/size
@@ -350,10 +352,10 @@ def do_glyph(data, glyphname, svg, baseline):
 
     #svg.write(GLYPH.format(glyphname, path))
 
-def gen_svg_font(glyph_files, output_dir, font_name, glyph_name, baseline):
+def gen_svg_font(glyph_files, output_dir, font_name, glyph_name, args):
 
     svg = open(output_dir + font_name + ".svg",'w')
-    svg.write(HEADER.format(font_name))
+    svg.write(HEADER.format(font_name, args.scale, args.ascent, args.descent))
 
     # use the special unicode user area for char encoding
     index = 0
@@ -364,7 +366,7 @@ def gen_svg_font(glyph_files, output_dir, font_name, glyph_name, baseline):
 
         data = open(f).read()
         #artname = chr(current)
-        do_glyph(data, glyph_name(index), svg, baseline)
+        do_glyph(data, glyph_name(index), svg, args.baseline)
 
         index += 1
 
@@ -407,8 +409,13 @@ def main():
     parser.add_argument('name', type=str, help="name of the icon font you want")
     parser.add_argument('src', type=str, help="folder wher the svg glyphs are")
     parser.add_argument('dest', type=str, help="folder to output the stuff", nargs="?")
-    parser.add_argument('--baseline', type=int, help="adjust generated chars up or down", default=0)
     parser.add_argument('--prefix', type=str, help="prefix for the css class names")
+
+    parser.add_argument('--scale', type=int, help="size of chars", default=2048)
+    parser.add_argument('--ascent', type=int, help="ascent", default=1536)
+    parser.add_argument('--descent', type=int, help="descent", default=512)
+    parser.add_argument('--baseline', type=int, help="adjust chars up or down", default=512)
+
 
 
     args = parser.parse_args()
@@ -441,7 +448,7 @@ def main():
         output_dir,
         font_name,
         glyph_name=lambda i:htmlhex(i + USER_AREA),
-        baseline=args.baseline,
+        args=args,
     )
 
     # generate designer svg font
@@ -450,7 +457,7 @@ def main():
         output_dir,
         font_name+"-designer",
         glyph_name=lambda i:chr(i+ord(DESIGNER_FONT_START_CHAR)),
-        baseline=args.baseline
+        args=args
     )
 
     # get file hash
