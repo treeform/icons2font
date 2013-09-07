@@ -86,17 +86,17 @@ try out and <a href='{0}-designer.ttf'>download</a> desinger font
 
 CSS_HEADER = """@font-face {{
   font-family: "{0}";
-  src: url('{0}.eot?h={1}');
-  src: url('{0}.eot?h={1}#iefix') format('embedded-opentype'),
-       url('{0}.ttf?h={1}') format('truetype'),
-       url('{0}.woff?h={1}') format('woff'),
-       url('{0}.svg?h={1}') format('svg'),
-       url('{0}.otf?h={1}') format("opentype");
+  src: url('{0}.eot?h={2}');
+  src: url('{0}.eot?h={2}#iefix') format('embedded-opentype'),
+       url('{0}.ttf?h={2}') format('truetype'),
+       url('{0}.woff?h={2}') format('woff'),
+       url('{0}.svg?h={2}') format('svg'),
+       url('{0}.otf?h={2}') format("opentype");
   font-weight: normal;
   font-style: normal;
   font-feature-settings: "calt=0,liga=0"
 }}
-[class^="{0}-"], [class*=" {0}-"] {{
+[class^="{1}-"], [class*=" {1}-"] {{
   font-family: {0};
   font-weight: normal;
   font-style: normal;
@@ -373,25 +373,25 @@ def gen_svg_font(glyph_files, output_dir, font_name, glyph_name, baseline):
     svg.close()
 
 
-def gen_css_for_font(glyph_files, output_dir, font_name, hash):
+def gen_css_for_font(glyph_files, output_dir, font_name, prefix, hash):
     css = open(output_dir + font_name + ".css",'w')
-    css.write(CSS_HEADER.format(font_name, hash))
+    css.write(CSS_HEADER.format(font_name, prefix, hash))
 
     for index, f in enumerate(glyph_files):
-        glyph_name = font_name + "-" + f.split("/")[-1].replace(".svg", "")
+        glyph_name = prefix + "-" + f.split("/")[-1].replace(".svg", "")
         css.write(
             '.{0}:before {{\n    content: "\{1:04x}";\n}}\n'.format(
                 glyph_name,
                 USER_AREA + index))
 
 
-def gen_html_for_font(glyph_files, output_dir, font_name):
+def gen_html_for_font(glyph_files, output_dir, font_name, prefix):
     doc = open(output_dir + font_name + ".html",'w')
     doc.write(DOC_HEADER.format(font_name))
 
     art_names = []
     for index, f in enumerate(glyph_files):
-        glyph_name = font_name + "-" + f.split("/")[-1].replace(".svg", "")
+        glyph_name = prefix + "-" + f.split("/")[-1].replace(".svg", "")
         art_name = chr(ord(DESIGNER_FONT_START_CHAR) + index)
         art_names.append(art_name)
         doc.write("<i class='{0}'></i> {0} ({1}) <br/>\n".format(
@@ -408,6 +408,8 @@ def main():
     parser.add_argument('src', type=str, help="folder wher the svg glyphs are")
     parser.add_argument('dest', type=str, help="folder to output the stuff", nargs="?")
     parser.add_argument('--baseline', type=int, help="adjust generated chars up or down", default=0)
+    parser.add_argument('--prefix', type=str, help="prefix for the css class names")
+
 
     args = parser.parse_args()
     
@@ -417,7 +419,9 @@ def main():
     output_dir = args.dest
     if not output_dir:
         output_dir = font_name + "/"  
-
+    prefix = args.prefix
+    if not prefix:
+        prefix = font_name
     
     # make sure output dir exists
     try:
@@ -437,7 +441,7 @@ def main():
         output_dir,
         font_name,
         glyph_name=lambda i:htmlhex(i + USER_AREA),
-        baseline=args.baseline
+        baseline=args.baseline,
     )
 
     # generate designer svg font
@@ -457,6 +461,7 @@ def main():
         glyph_files,
         output_dir,
         font_name,
+        prefix,
         hash
     )
 
@@ -464,7 +469,8 @@ def main():
     gen_html_for_font(
         glyph_files,
         output_dir,
-        font_name
+        font_name,
+        prefix
     )
 
     # make ttf, woff, off, and eot browser fonts
