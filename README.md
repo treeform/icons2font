@@ -3,6 +3,7 @@ icons2font
 
 This utility takes vector icons in svg format and convert them to icon fonts (svg,ttf,waff,eot) to be display in all browsers.
 
+
 Usage
 =====
 
@@ -10,7 +11,7 @@ Usage
 	icons2font.py [-h] [--baseline BASELINE] name src [dest]
 
 	This utility takes vector icons in svg format and converts them to icon fonts
-	(svg,ttf,waff,eot) to be display in all browsers. requires python-fontforge
+	(svg,ttf,waff,eot) to be display in all browsers.
 
 	positional arguments:
 	  name                 name of the icon font you want
@@ -24,3 +25,16 @@ Usage
 example
 -------
     python icons2font.py my_awesome_font ~/some_svgs ~/i2f_output --baseline 2
+
+
+
+Requirements
+============
+
+* fontforge (with python library)
+* ttf2eot
+
+
+Mac installation
+----------------
+brew install fontforge ttf2eot
